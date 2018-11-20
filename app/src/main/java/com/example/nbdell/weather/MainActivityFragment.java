@@ -5,10 +5,17 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,14 +31,36 @@ import java.util.List;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
+    private ArrayAdapter<String> ForecastAdapter;
 
     public MainActivityFragment() {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.forecast_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_refresh) {
+            FetchWeatherTask weatherTask = new FetchWeatherTask();
+            weatherTask.execute();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayAdapter<String> ForecastAdapter;
+
         String[] data = {
                 "Mon 6/23 - Sunny - 31/17",
                 "Tue 6/24 - Foggy - 21/8",
@@ -55,12 +84,30 @@ public class MainActivityFragment extends Fragment {
         listView.setAdapter(ForecastAdapter);
         return rootView;
     }
-    public class FetchWeatherTask extends AsyncTask<Void, Void, Void> {
+    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
+        private String[] getDataFromJson(String forecastJsonStr) throws JSONException{
+            JSONObject weather = new JSONObject(forecastJsonStr);
+            JSONArray cities = weather.getJSONArray("list");
+            String[] resultStrs = new String[5];
+
+            for (int i=0; i<cities.length(); i++) {
+                JSONObject city = cities.getJSONObject(i);
+                String name = city.getString("name");
+                JSONObject main_details = city.getJSONObject("main");
+                String temp =  main_details.getString("temp");
+                Log.v(LOG_TAG,"name" + name);
+                Log.v(LOG_TAG,"temprature" + temp);
+                resultStrs[i] = name + " " + temp;
+            }
+        return resultStrs;
+        }
+
+
         @Override
-        protected Void doInBackground(Void... params) {
+        protected String[] doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -121,7 +168,23 @@ public class MainActivityFragment extends Fragment {
                     }
                 }
             }
+            try {
+                return getDataFromJson(forecastJsonStr);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }
             return null;
+        }
+        @Override
+        protected void onPostExecute(String[] result) {
+            if (result != null) {
+                ForecastAdapter.clear();
+                for (String city : result) {
+                    ForecastAdapter.add(city);
+                }
+                // New data is back from the server.  Hooray!
+            }
         }
     }
 }
