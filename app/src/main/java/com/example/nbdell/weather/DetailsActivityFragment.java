@@ -147,12 +147,6 @@ public class DetailsActivityFragment extends Fragment {
             if (result != null) {
 
                 List<String> Forecast = new ArrayList<String>(Arrays.asList(result));
-                ForecastAdapter =
-                        new ArrayAdapter<String>(
-                                getActivity(), // The current context (this activity)
-                                R.layout.list_item, // The name of the layout ID.
-                                R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                                Forecast);
 
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_Details);
                 listView.setAdapter(ForecastAdapter);

@@ -36,8 +36,8 @@ import java.util.List;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-    private ArrayAdapter<City> ForecastAdapter ;
 
+    CityAdapter adapter;
     private String[] Cities_Id = {
             "524901",
             "703448",
@@ -191,16 +191,13 @@ public class MainActivityFragment extends Fragment {
         protected void onPostExecute(City[] result) {
             if (result != null) {
 
-                List<City> Forecast = new ArrayList<City>(Arrays.asList(result));
-                ForecastAdapter =
-                        new ArrayAdapter<City>(
-                                getActivity(), // The current context (this activity)
-                                R.layout.list_item, // The name of the layout ID.
-                                R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                                Forecast);
+                List<City> cities = new ArrayList<City>(Arrays.asList(result));
+                Log.v("Messi",cities.get(0).getName());
+
 
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_forecast);
-                listView.setAdapter(ForecastAdapter);
+                adapter = new CityAdapter(getContext(), cities);
+                listView.setAdapter(adapter);
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
                     @Override

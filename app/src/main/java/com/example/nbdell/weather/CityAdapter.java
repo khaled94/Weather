@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,21 +24,28 @@ public class CityAdapter extends BaseAdapter {
     }
     @Override
     public int getCount() {
-        return 0;
+        return cities.size();
     }
 
     @Override
     public Object getItem(int i) {
-        return null;
+        return cities.get(i);
     }
 
     @Override
     public long getItemId(int i) {
-        return 0;
+        return i;
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        return null;
+        City city = (City) getItem(i);
+        view = LayoutInflater.from(context).inflate(R.layout.list_item, viewGroup, false);
+        TextView name = (TextView) view.findViewById(R.id.city_name);
+        TextView temp = (TextView) view.findViewById(R.id.city_temp);
+        name.setText(city.getName());
+        temp.setText(city.getTemp());
+        return view;
     }
-}
+
+    }
