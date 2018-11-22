@@ -1,6 +1,5 @@
 package com.example.nbdell.weather;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -8,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -35,6 +33,9 @@ public class DetailsActivityFragment extends Fragment {
     private ArrayAdapter<String> ForecastAdapter ;
     DetailsActivity activity_temp = (DetailsActivity) getActivity();
     String SentId = activity_temp.id;
+    CityAdapter adapter;
+
+    private City [] cities  = new City[5];
 
     public DetailsActivityFragment() {
     }
@@ -47,31 +48,37 @@ public class DetailsActivityFragment extends Fragment {
         data.execute();
         return rootView;
     }
-    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+    public class FetchWeatherTask extends AsyncTask<String, Void, City> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-        private String[] getDataFromJson(String forecastJsonStr) throws JSONException{
+        private City getDataFromJson(String forecastJsonStr) throws JSONException{
+
+            City resultStrs = new City(" SentId");
 
             JSONObject weather = new JSONObject(forecastJsonStr);
             JSONArray cityDetails = weather.getJSONArray("list");
             JSONObject main_details = cityDetails.getJSONObject(0);
             JSONObject main_details2 = main_details.getJSONObject("main");
-            String[] resultStrs = new String[3];
-            String temp =  main_details2.getString("temp");
+
             String temp_min =  main_details2.getString("temp_min");
             String temp_max =  main_details2.getString("temp_max");
-            resultStrs[0] = "temp" + " " + temp;
-            resultStrs[1] = "temp_min" + " " + temp_min;
-            resultStrs[2] = "temp_max" + " " + temp_max;
-            Log.v("firstTest","hhjs");
-            Log.v("firstTest",temp);
+            String pressure =  main_details2.getString("pressure");
+            String humidity =  main_details2.getString("humidity");
+            String sea_level =  main_details2.getString("sea_level");
+
+            resultStrs.setHumidity(humidity);
+            resultStrs.setMax_temp(temp_max);
+            resultStrs.setPressure(pressure);
+            resultStrs.setSea_level(sea_level);
+            resultStrs.setMin_temp(temp_min);
+
             return resultStrs;
         }
 
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected City doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -142,8 +149,9 @@ public class DetailsActivityFragment extends Fragment {
             }
             return null;
         }
+
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(City result) {
             if (result != null) {
 
                 List<String> Forecast = new ArrayList<String>(Arrays.asList(result));

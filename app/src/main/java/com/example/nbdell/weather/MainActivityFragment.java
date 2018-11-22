@@ -192,9 +192,6 @@ public class MainActivityFragment extends Fragment {
             if (result != null) {
 
                 List<City> cities = new ArrayList<City>(Arrays.asList(result));
-                Log.v("Messi",cities.get(0).getName());
-
-
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_forecast);
                 adapter = new CityAdapter(getContext(), cities);
                 listView.setAdapter(adapter);
