@@ -187,6 +187,7 @@ public class MainActivityFragment extends Fragment {
             }
             return null;
         }
+
         @Override
         protected void onPostExecute(City[] result) {
             if (result != null) {

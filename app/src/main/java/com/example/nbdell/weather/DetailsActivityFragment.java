@@ -1,5 +1,6 @@
 package com.example.nbdell.weather;
 
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -30,14 +31,13 @@ import java.util.List;
  */
 public class DetailsActivityFragment extends Fragment {
 
-    private ArrayAdapter<String> ForecastAdapter ;
+
     DetailsActivity activity_temp = (DetailsActivity) getActivity();
     String SentId = activity_temp.id;
-    CityAdapter adapter;
-
-    private City [] cities  = new City[5];
+    CityDetailsAdapter adapter;
 
     public DetailsActivityFragment() {
+
     }
 
     @Override
@@ -48,32 +48,44 @@ public class DetailsActivityFragment extends Fragment {
         data.execute();
         return rootView;
     }
+
     public class FetchWeatherTask extends AsyncTask<String, Void, City> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         private City getDataFromJson(String forecastJsonStr) throws JSONException{
 
-            City resultStrs = new City(" SentId");
+            City result = new City(" SentId");
 
             JSONObject weather = new JSONObject(forecastJsonStr);
             JSONArray cityDetails = weather.getJSONArray("list");
-            JSONObject main_details = cityDetails.getJSONObject(0);
-            JSONObject main_details2 = main_details.getJSONObject("main");
+            int cnt = weather.getInt("cnt");
+            result.setSize(cnt);
 
-            String temp_min =  main_details2.getString("temp_min");
-            String temp_max =  main_details2.getString("temp_max");
-            String pressure =  main_details2.getString("pressure");
-            String humidity =  main_details2.getString("humidity");
-            String sea_level =  main_details2.getString("sea_level");
+            result.pressure = new String[cnt];
+            result.max_temp = new String[cnt];
+            result.min_temp = new String[cnt];
+            result.sea_level = new String[cnt];
+            result.humidity = new String[cnt];
 
-            resultStrs.setHumidity(humidity);
-            resultStrs.setMax_temp(temp_max);
-            resultStrs.setPressure(pressure);
-            resultStrs.setSea_level(sea_level);
-            resultStrs.setMin_temp(temp_min);
+            for ( int i = 0 ; i < cnt ; i++ ) {
 
-            return resultStrs;
+                JSONObject main_details = cityDetails.getJSONObject(i);
+                JSONObject main_details2 = main_details.getJSONObject("main");
+
+                String temp_min = main_details2.getString("temp_min");
+                String temp_max = main_details2.getString("temp_max");
+                String pressure = main_details2.getString("pressure");
+                String humidity = main_details2.getString("humidity");
+                String sea_level = main_details2.getString("sea_level");
+
+                result.humidity[i] = humidity;
+                result.max_temp[i] = temp_max;
+                result.min_temp[i] = temp_min;
+                result.pressure[i] = pressure;
+                result.sea_level[i] = sea_level;
+            }
+            return result;
         }
 
 
@@ -150,17 +162,13 @@ public class DetailsActivityFragment extends Fragment {
             return null;
         }
 
-        @Override
         protected void onPostExecute(City result) {
             if (result != null) {
 
-                List<String> Forecast = new ArrayList<String>(Arrays.asList(result));
-
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_Details);
-                listView.setAdapter(ForecastAdapter);
+                adapter = new CityDetailsAdapter(getContext(),result);
+                listView.setAdapter(adapter);
 
-
-                // New data is back from the server.  Hooray!
             }
         }
     }
