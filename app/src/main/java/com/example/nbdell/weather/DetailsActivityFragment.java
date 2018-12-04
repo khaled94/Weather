@@ -1,6 +1,6 @@
 package com.example.nbdell.weather;
 
-import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -32,11 +31,13 @@ import java.util.List;
  */
 public class DetailsActivityFragment extends Fragment {
 
-    private ArrayAdapter<String> ForecastAdapter ;
+
     DetailsActivity activity_temp = (DetailsActivity) getActivity();
     String SentId = activity_temp.id;
+    CityDetailsAdapter adapter;
 
     public DetailsActivityFragment() {
+
     }
 
     @Override
@@ -47,31 +48,49 @@ public class DetailsActivityFragment extends Fragment {
         data.execute();
         return rootView;
     }
-    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+
+    public class FetchWeatherTask extends AsyncTask<String, Void, City> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-        private String[] getDataFromJson(String forecastJsonStr) throws JSONException{
+        private City getDataFromJson(String forecastJsonStr) throws JSONException{
+
+            City result = new City(" SentId");
 
             JSONObject weather = new JSONObject(forecastJsonStr);
             JSONArray cityDetails = weather.getJSONArray("list");
-            JSONObject main_details = cityDetails.getJSONObject(0);
-            JSONObject main_details2 = main_details.getJSONObject("main");
-            String[] resultStrs = new String[3];
-            String temp =  main_details2.getString("temp");
-            String temp_min =  main_details2.getString("temp_min");
-            String temp_max =  main_details2.getString("temp_max");
-            resultStrs[0] = "temp" + " " + temp;
-            resultStrs[1] = "temp_min" + " " + temp_min;
-            resultStrs[2] = "temp_max" + " " + temp_max;
-            Log.v("firstTest","hhjs");
-            Log.v("firstTest",temp);
-            return resultStrs;
+            int cnt = weather.getInt("cnt");
+            result.setSize(cnt);
+
+            result.pressure = new String[cnt];
+            result.max_temp = new String[cnt];
+            result.min_temp = new String[cnt];
+            result.sea_level = new String[cnt];
+            result.humidity = new String[cnt];
+
+            for ( int i = 0 ; i < cnt ; i++ ) {
+
+                JSONObject main_details = cityDetails.getJSONObject(i);
+                JSONObject main_details2 = main_details.getJSONObject("main");
+
+                String temp_min = main_details2.getString("temp_min");
+                String temp_max = main_details2.getString("temp_max");
+                String pressure = main_details2.getString("pressure");
+                String humidity = main_details2.getString("humidity");
+                String sea_level = main_details2.getString("sea_level");
+
+                result.humidity[i] = humidity;
+                result.max_temp[i] = temp_max;
+                result.min_temp[i] = temp_min;
+                result.pressure[i] = pressure;
+                result.sea_level[i] = sea_level;
+            }
+            return result;
         }
 
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected City doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -142,23 +161,14 @@ public class DetailsActivityFragment extends Fragment {
             }
             return null;
         }
-        @Override
-        protected void onPostExecute(String[] result) {
+
+        protected void onPostExecute(City result) {
             if (result != null) {
 
-                List<String> Forecast = new ArrayList<String>(Arrays.asList(result));
-                ForecastAdapter =
-                        new ArrayAdapter<String>(
-                                getActivity(), // The current context (this activity)
-                                R.layout.list_item, // The name of the layout ID.
-                                R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                                Forecast);
-
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_Details);
-                listView.setAdapter(ForecastAdapter);
+                adapter = new CityDetailsAdapter(getContext(),result);
+                listView.setAdapter(adapter);
 
-
-                // New data is back from the server.  Hooray!
             }
         }
     }

@@ -1,6 +1,9 @@
 package com.example.nbdell.weather;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -33,7 +36,8 @@ import java.util.List;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-    private ArrayAdapter<String> ForecastAdapter ;
+
+    CityAdapter adapter;
     private String[] Cities_Id = {
             "524901",
             "703448",
@@ -41,6 +45,9 @@ public class MainActivityFragment extends Fragment {
             "707860",
             "519188"
     };
+    private City [] cities  = new City[5];
+
+
     public MainActivityFragment() {
     }
 
@@ -63,21 +70,39 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        for( int i = 0 ; i < 5 ; i++ ){
+            cities[i] = new City(Cities_Id[i]);
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         FetchWeatherTask data = new FetchWeatherTask();
         data.execute();
         return rootView;
     }
-    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager manager =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+        boolean isAvailable = false;
+        if (networkInfo != null && networkInfo.isConnected()) {
+            // Network is present and connected
+            isAvailable = true;
+        }
+        return isAvailable;
+    }
+
+    public class FetchWeatherTask extends AsyncTask<String, Void, City[]> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-        private String[] getDataFromJson(String forecastJsonStr) throws JSONException{
+        private City[] getDataFromJson(String forecastJsonStr) throws JSONException{
             JSONObject weather = new JSONObject(forecastJsonStr);
             JSONArray cities = weather.getJSONArray("list");
-            String[] resultStrs = new String[5];
-
+            City[] resultStrs = new City[5];
+            for( int i = 0 ; i < 5 ; i++ ){
+                resultStrs[i] = new City(Cities_Id[i]);
+            }
             for (int i=0; i<cities.length(); i++) {
                 JSONObject city = cities.getJSONObject(i);
                 String name = city.getString("name");
@@ -85,14 +110,15 @@ public class MainActivityFragment extends Fragment {
                 String temp =  main_details.getString("temp");
                 Log.v(LOG_TAG,"name" + name);
                 Log.v(LOG_TAG,"temprature" + temp);
-                resultStrs[i] = name + " " + temp;
+                resultStrs[i].setName(name);
+                resultStrs[i].setTemp(temp);
             }
         return resultStrs;
         }
 
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected City[] doInBackground(String... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -161,20 +187,15 @@ public class MainActivityFragment extends Fragment {
             }
             return null;
         }
+
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(City[] result) {
             if (result != null) {
 
-                List<String> Forecast = new ArrayList<String>(Arrays.asList(result));
-                ForecastAdapter =
-                        new ArrayAdapter<String>(
-                                getActivity(), // The current context (this activity)
-                                R.layout.list_item, // The name of the layout ID.
-                                R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                                Forecast);
-
+                List<City> cities = new ArrayList<City>(Arrays.asList(result));
                 ListView listView = (ListView) getActivity().findViewById(R.id.listview_forecast);
-                listView.setAdapter(ForecastAdapter);
+                adapter = new CityAdapter(getContext(), cities);
+                listView.setAdapter(adapter);
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
                     @Override
